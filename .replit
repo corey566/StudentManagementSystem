@@ -1,8 +1,8 @@
-modules = ["php"]
+modules = ["php", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["php", "sqlite"]
+packages = ["php", "sqlite", "php82Extensions.pgsql", "php82Extensions.pdo_pgsql", "postgresql"]
 
 [workflows]
 runButton = "Project"
