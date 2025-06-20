@@ -1,0 +1,88 @@
+# Security configuration for uploads directory
+# Prevents direct execution of scripts and unauthorized access
+
+# Deny direct access to all files by default
+<Files "*">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Allow access only to authorized file types
+<FilesMatch "\.(pdf|doc|docx|ppt|pptx|zip|rar)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Prevent execution of PHP and other server-side scripts
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Remove server signature
+ServerSignature Off
+
+# Disable directory browsing
+Options -Indexes
+
+# Prevent access to .htaccess itself
+<Files ".htaccess">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Set proper MIME types for downloads
+<IfModule mod_mime.c>
+    AddType application/pdf .pdf
+    AddType application/msword .doc
+    AddType application/vnd.openxmlformats-officedocument.wordprocessingml.document .docx
+    AddType application/vnd.ms-powerpoint .ppt
+    AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx
+    AddType application/zip .zip
+    AddType application/x-rar-compressed .rar
+</IfModule>
+
+# Force download for certain file types
+<IfModule mod_headers.c>
+    <FilesMatch "\.(pdf|doc|docx|ppt|pptx|zip|rar)$">
+        Header set Content-Disposition "attachment"
+        Header set X-Content-Type-Options "nosniff"
+        Header set X-Frame-Options "DENY"
+        Header set X-XSS-Protection "1; mode=block"
+    </FilesMatch>
+</IfModule>
+
+# Set cache control for uploaded files
+<IfModule mod_expires.c>
+    ExpiresActive On
+    <FilesMatch "\.(pdf|doc|docx|ppt|pptx|zip|rar)$">
+        ExpiresDefault "access plus 1 month"
+    </FilesMatch>
+</IfModule>
+
+# Limit file upload size (if supported by server)
+<IfModule mod_security.c>
+    SecRequestBodyLimit 52428800
+    SecRequestBodyNoFilesLimit 1048576
+</IfModule>
+
+# Log access attempts for security monitoring
+<IfModule mod_log_config.c>
+    LogFormat "%h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" uploads
+    CustomLog logs/uploads.log uploads
+</IfModule>
+
+# Prevent hotlinking of files
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_REFERER} !^$
+    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?yourdomain\.com [NC]
+    RewriteRule \.(pdf|doc|docx|ppt|pptx|zip|rar)$ - [F,L]
+</IfModule>
+
+# Additional security headers
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
